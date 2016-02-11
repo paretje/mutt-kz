@@ -1563,16 +1563,8 @@ int nm_sync(CONTEXT *ctx, int *index_hint)
 
 		ctx->path = hd->folder;
 		ctx->magic = hd->magic;
-#if USE_HCACHE
-		rc = mh_sync_mailbox_message(ctx, i, NULL);
-#else
-		rc = mh_sync_mailbox_message(ctx, i);
-#endif
 		ctx->path = uri;
 		ctx->magic = M_NOTMUCH;
-
-		if (rc)
-			break;
 
 		if (!h->deleted)
 			nm_header_get_fullpath(h, new, sizeof(new));
@@ -1580,7 +1572,7 @@ int nm_sync(CONTEXT *ctx, int *index_hint)
 		if (h->deleted || strcmp(old, new) != 0) {
 			if (h->deleted && remove_filename(data, old) == 0)
 				changed = 1;
-			else if (*new && *old && rename_filename(data, old, new, h) == 0)
+			else if (*new && *old)
 				changed = 1;
 		}
 
