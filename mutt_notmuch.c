@@ -1328,6 +1328,7 @@ int nm_modify_message_tags(CONTEXT *ctx, HEADER *hdr, char *buf)
 	notmuch_database_t *db = NULL;
 	notmuch_message_t *msg = NULL;
 	int rc = -1;
+	HEADER tmp;
 
 	if (!buf || !*buf || !data)
 		return -1;
@@ -1338,10 +1339,22 @@ int nm_modify_message_tags(CONTEXT *ctx, HEADER *hdr, char *buf)
 	dprint(1, (debugfile, "nm: tags modify: '%s'\n", buf));
 
 	update_tags(msg, buf);
+
+	update_message_path(hdr, notmuch_message_get_filename(msg));
+
+	/* TODO: the flags of this message should be synced before modifying the tags */
+	if (hdr->changed)
+		dprint(1, (debugfile, "nm: header changes were not synced before modifying tags, changes are lost: '%s'\n", buf));
+
+	memset(&tmp, 0, sizeof(tmp));
+	maildir_parse_flags(&tmp, hdr->path);
+	maildir_update_flags(ctx, hdr, &tmp);
+
 	update_header_tags(hdr, msg);
 	mutt_set_header_color(ctx, hdr);
 
 	rc = 0;
+	/* TODO: is this necessary? We just synced the tags? */
 	hdr->changed = TRUE;
 done:
 	if (!is_longrun(data))
